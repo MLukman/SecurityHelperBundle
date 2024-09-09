@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<routes xmlns="http://symfony.com/schema/routing"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/routing https://symfony.com/schema/routing/routing-1.0.xsd">
+
+    <route id="security_oauth2_connect_start" path="/connect/{client}">
+        <default key="_controller">MLukman\SecurityHelperBundle\Controller\OAuth2Controller::connect</default>
+    </route>
+
+    <route id="security_oauth2_connect_check" path="/connect/{client}/check">
+        <default key="_controller">MLukman\SecurityHelperBundle\Controller\OAuth2Controller::check</default>
+    </route>
+
+    <route id="security_logout" path="/logout">
+    </route>
+
+    <route id="security_login" path="/login">
+        <default key="_controller">MLukman\SecurityHelperBundle\Controller\LoginControllerInterface::login</default>
+    </route>
+    
+</routes>
