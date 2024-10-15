@@ -3,11 +3,11 @@
 namespace MLukman\SecurityHelperBundle\Authentication;
 
 use DateTime;
-use Exception;
 use MLukman\SecurityHelperBundle\Util\ReCaptchaUtil;
 use MLukman\SecurityHelperBundle\Util\Redirector;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\DependencyInjection\Exception\AutowiringFailedException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,7 +47,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
             Redirector $redirector,
             ReCaptchaUtil $recaptcha,
             ?AuthenticationRepositoryInterface $authRepository,
-            #[TaggedIterator('security.audit.logger')] iterable $auditLoggers)
+            #[AutowireIterator('security.audit.logger')] iterable $auditLoggers)
     {
         $this->security = $security;
         $this->urlGenerator = $urlGenerator;
@@ -61,7 +61,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     public function repo(): AuthenticationRepositoryInterface
     {
         if (!$this->authRepository) {
-            throw new Exception('Implementation Error: application is required to implement and alias the interface ' . AuthenticationRepositoryInterface::class);
+            throw new AutowiringFailedException(AuthenticationRepositoryInterface::class, self::class . ' requires ' . AuthenticationRepositoryInterface::class . ' to be implemented and aliased by the application.');
         }
         return $this->authRepository;
     }

@@ -11,7 +11,7 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use MLukman\DoctrineHelperBundle\Service\ObjectValidator;
 use MLukman\SecurityHelperBundle\Util\Redirector;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -29,22 +29,21 @@ use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 class OAuth2Authenticator extends KnpUOAuth2Authenticator
 {
-
-    const OAUTH_REDIRECT_ROUTE = 'security_oauth2_connect_check';
-
     use TargetPathTrait;
+    public const OAUTH_REDIRECT_ROUTE = 'security_oauth2_connect_check';
 
-    public function __construct(private AuthenticationListener $authListener,
-            protected ClientRegistry $clientRegistry,
-            protected EntityManagerInterface $entityManager,
-            protected ObjectValidator $validator,
-            protected RouterInterface $router,
-            protected Security $security,
-            protected RequestStack $requestStack,
-            protected Redirector $redirector,
-            #[TaggedIterator('oauth2.authenticator.visitor')] protected iterable $visitors)
-    {
-        
+    public function __construct(
+        private AuthenticationListener $authListener,
+        protected ClientRegistry $clientRegistry,
+        protected EntityManagerInterface $entityManager,
+        protected ObjectValidator $validator,
+        protected RouterInterface $router,
+        protected Security $security,
+        protected RequestStack $requestStack,
+        protected Redirector $redirector,
+        #[AutowireIterator('oauth2.authenticator.visitor')] protected iterable $visitors
+    ) {
+
     }
 
     public function supports(Request $request): ?bool
@@ -63,8 +62,9 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
 
         // store redirect after login into state
         $redirect = $redirect_after_login ?:
-                $request->headers->get('referer') ?:
-                $this->router->generate($this->authListener->getDefaultRedirectRoute(), referenceType: Router::ABSOLUTE_URL);
+            $this->redirector->fetchRedirectUrl() ?:
+            $request->headers->get('referer') ?:
+            $this->router->generate($this->authListener->getDefaultRedirectRoute(), referenceType: Router::ABSOLUTE_URL);
         $options = ['state' => rtrim(strtr(base64_encode($redirect), '+/', '-_'), '=')];
 
         // prepare redirect to provider
@@ -89,8 +89,8 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
 
         $authenticatedUser = $this->createOrGetUser($clientId, $oauth2User);
         if (($sessionUser = $this->security->getUser()) &&
-                ($existingUser = $this->authListener->queryUserEntityFromSecurityUser($sessionUser)) &&
-                $authenticatedUser != $existingUser) {
+            ($existingUser = $this->authListener->queryUserEntityFromSecurityUser($sessionUser)) &&
+            $authenticatedUser != $existingUser) {
             $existingUser->merge($authenticatedUser);
         }
 
@@ -101,8 +101,8 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
         }
 
         return new SelfValidatingPassport(
-                new UserBadge($accessToken->getToken(), fn() => $authenticatedUser),
-                [$rememberMe]
+            new UserBadge($accessToken->getToken(), fn () => $authenticatedUser),
+            [$rememberMe]
         );
     }
 
@@ -144,9 +144,10 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         return new RedirectResponse(
-                $this->getTargetPath($request->getSession(), $firewallName) ?:
-                base64_decode(strtr($request->query->get('state'), '-_', '+/')) ?:
-                $this->router->generate($this->authListener->getDefaultRedirectRoute()));
+            $this->getTargetPath($request->getSession(), $firewallName) ?:
+            base64_decode(strtr($request->query->get('state'), '-_', '+/')) ?:
+            $this->router->generate($this->authListener->getDefaultRedirectRoute())
+        );
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
