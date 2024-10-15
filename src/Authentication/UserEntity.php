@@ -15,18 +15,17 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity(
-            fields: ['username'],
-            errorPath: 'username',
-            message: 'This username is already used'
-    )]
+    fields: ['username'],
+    errorPath: 'username',
+    message: 'This username is already used'
+)]
 #[UniqueEntity(
-            fields: ['method', 'email'],
-            errorPath: 'email',
-            message: 'This email is already registered'
-    )]
+    fields: ['method', 'email'],
+    errorPath: 'email',
+    message: 'This email is already registered'
+)]
 abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
 {
-
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(groups: ['registration'])]
     protected ?string $username = null;
@@ -64,8 +63,8 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
     #[Assert\NotBlank(groups: ['profile'])]
     protected ?string $timezone = null;
 
-    #[ORM\Column(nullable: true)]
-    protected ?bool $blocked = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    protected ?string $blockedReason = null;
 
     #[ORM\Column(length: 64, nullable: true)]
     protected ?string $resetCode = null;
@@ -73,9 +72,11 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
     #[ORM\Column(nullable: true)]
     protected array $attributes = [];
 
-    public function __construct(string $method, string $credential,
-            ?string $username = null)
-    {
+    public function __construct(
+        string $method,
+        string $credential,
+        ?string $username = null
+    ) {
         $this->username = $username ?: sprintf("%s-%s", $method, $credential);
         $this->method = $method;
         $this->credential = $credential;
@@ -136,10 +137,13 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
     public function removeRole(string $role): array
     {
         $this->setRoles(array_values(
-                        array_filter($this->getRoles(),
-                                function ($r) use ($role) {
-                                    return $r != $role;
-                                })));
+            array_filter(
+                $this->getRoles(),
+                function ($r) use ($role) {
+                    return $r != $role;
+                }
+            )
+        ));
         return $this->getRoles();
     }
 
@@ -213,14 +217,14 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
         return $this;
     }
 
-    public function isBlocked(): ?bool
+    public function getBlockedReason(): ?string
     {
-        return $this->blocked;
+        return $this->blockedReason;
     }
 
-    public function setBlocked(?bool $blocked): self
+    public function setBlockedReason(?string $blockedReason): self
     {
-        $this->blocked = $blocked;
+        $this->blockedReason = $blockedReason;
 
         return $this;
     }
@@ -271,7 +275,7 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
 
     public function eraseCredentials(): void
     {
-        
+
     }
 
     public function displayTitle(): string
@@ -281,6 +285,6 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
 
     public function merge(UserEntity $tobemerged)
     {
-        
+
     }
 }

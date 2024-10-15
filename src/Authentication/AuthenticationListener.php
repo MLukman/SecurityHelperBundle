@@ -28,7 +28,6 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class AuthenticationListener implements AuthenticationEntryPointInterface, EventSubscriberInterface
 {
-
     public const MESSAGE_WELCOME = 'Welcome, %s.';
     public const MESSAGE_WELCOME_BACK = 'Welcome back, %s. Your last login was on %s.';
 
@@ -41,14 +40,15 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     protected iterable $auditLoggers;
 
     #[Required]
-    public function requiredByAAL(Security $security,
-            UrlGeneratorInterface $urlGenerator,
-            CsrfTokenManagerInterface $csrfTokenManager,
-            Redirector $redirector,
-            ReCaptchaUtil $recaptcha,
-            ?AuthenticationRepositoryInterface $authRepository,
-            #[AutowireIterator('security.audit.logger')] iterable $auditLoggers)
-    {
+    public function requiredByAAL(
+        Security $security,
+        UrlGeneratorInterface $urlGenerator,
+        CsrfTokenManagerInterface $csrfTokenManager,
+        Redirector $redirector,
+        ReCaptchaUtil $recaptcha,
+        ?AuthenticationRepositoryInterface $authRepository,
+        #[AutowireIterator('security.audit.logger')] iterable $auditLoggers
+    ) {
         $this->security = $security;
         $this->urlGenerator = $urlGenerator;
         $this->csrfTokenManager = $csrfTokenManager;
@@ -157,13 +157,15 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         $request = $event->getRequest();
         if (($redirect_uri = $request->query->get('redirect_uri'))) {
             $response = new RedirectResponse(
-                    $redirect_uri, RedirectResponse::HTTP_SEE_OTHER
+                $redirect_uri,
+                RedirectResponse::HTTP_SEE_OTHER
             );
             $event->setResponse($response);
         } else {
             $response = new RedirectResponse(
-                    $this->urlGenerator->generate($this->getDefaultRedirectRoute()),
-                    RedirectResponse::HTTP_SEE_OTHER);
+                $this->urlGenerator->generate($this->getDefaultRedirectRoute()),
+                RedirectResponse::HTTP_SEE_OTHER
+            );
             $event->setResponse($response);
         }
     }
@@ -191,8 +193,8 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     public function queryUserEntity(string $method, string $criteriaField, string $criteriaValue, bool $ignoreBlocked = false): ?UserEntity
     {
         $user = $this->repo()->queryUserEntity($method, $criteriaField, $criteriaValue);
-        if ($user && $user->isBlocked() && !$ignoreBlocked) { // User blocked
-            throw new CustomUserMessageAuthenticationException('Sorry but you have been blocked from logging in. Please contact an administrator if you think it is a mistake.');
+        if ($user && ($block = $user->getBlockedReason()) && !$ignoreBlocked) { // User blocked
+            throw new CustomUserMessageAuthenticationException(sprintf('Sorry but you have been blocked from logging in with the following reason: %s. Please contact an administrator if you think it is a mistake.', $block));
         }
 
         return $user;
