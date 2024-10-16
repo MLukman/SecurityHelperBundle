@@ -113,7 +113,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     public function onLogin(LoginSuccessEvent $event): void
     {
         $user = ($securityUser = $this->security->getUser()) ?
-                $this->queryUserEntityFromSecurityUser($securityUser) : null;
+            $this->queryUserEntityFromSecurityUser($securityUser) : null;
 
         if ($user) {
 
@@ -145,6 +145,12 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         // redirect
         if (($redirect = $this->redirector->generateRedirectResponse())) {
             $event->setResponse($redirect);
+        } else {
+            $response = new RedirectResponse(
+                $this->urlGenerator->generate($this->getDefaultRedirectRoute()),
+                RedirectResponse::HTTP_SEE_OTHER
+            );
+            $event->setResponse($response);
         }
     }
 
@@ -153,21 +159,13 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         if ($event->getToken()) {
             $this->log($event->getToken()->getUser(), 'LOGOUT');
         }
-        // redirect if there is redirect_uri query parameter
-        $request = $event->getRequest();
-        if (($redirect_uri = $request->query->get('redirect_uri'))) {
-            $response = new RedirectResponse(
-                $redirect_uri,
-                RedirectResponse::HTTP_SEE_OTHER
-            );
-            $event->setResponse($response);
-        } else {
-            $response = new RedirectResponse(
-                $this->urlGenerator->generate($this->getDefaultRedirectRoute()),
-                RedirectResponse::HTTP_SEE_OTHER
-            );
-            $event->setResponse($response);
-        }
+        // redirect to redirect_uri query parameter or default redirect route
+        $redirect_uri = $event->getRequest()->query->get('redirect_uri') ?: $this->urlGenerator->generate($this->getDefaultRedirectRoute());
+        $response = new RedirectResponse(
+            $redirect_uri,
+            RedirectResponse::HTTP_SEE_OTHER
+        );
+        $event->setResponse($response);
     }
 
     public function getDefaultRedirectRoute(): string
@@ -203,7 +201,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     public function currentUser(): ?UserEntity
     {
         return ($securityUser = $this->security->getUser()) ?
-                $this->queryUserEntityFromSecurityUser($this->security->getUser()) : null;
+            $this->queryUserEntityFromSecurityUser($this->security->getUser()) : null;
     }
 
     public function queryUserEntityFromSecurityUser(UserInterface $securityUser): ?UserEntity

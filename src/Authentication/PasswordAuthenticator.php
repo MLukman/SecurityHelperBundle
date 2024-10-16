@@ -29,21 +29,19 @@ use Symfony\Component\Security\Http\Util\TargetPathTrait;
  */
 class PasswordAuthenticator extends AbstractAuthenticator
 {
-
-    const DEFAULT_REDIRECT_ROUTE = 'app_home';
-    const LOGIN_ROUTE = 'security_login';
-
     use TargetPathTrait;
+    public const DEFAULT_REDIRECT_ROUTE = 'app_home';
+    public const LOGIN_ROUTE = 'security_login';
 
-    public function __construct(protected AuthenticationListener $authListener,
-            protected EntityManagerInterface $entityManager,
-            protected ObjectValidator $validator,
-            protected RouterInterface $router,
-            protected UserPasswordHasherInterface $passwordEncoder,
-            protected MailerInterface $mailer
-    )
-    {
-        
+    public function __construct(
+        protected AuthenticationListener $authListener,
+        protected EntityManagerInterface $entityManager,
+        protected ObjectValidator $validator,
+        protected RouterInterface $router,
+        protected UserPasswordHasherInterface $passwordEncoder,
+        protected MailerInterface $mailer
+    ) {
+
     }
 
     public function supports(Request $request): ?bool
@@ -93,8 +91,8 @@ class PasswordAuthenticator extends AbstractAuthenticator
         $this->entityManager->flush();
 
         return new SelfValidatingPassport(
-                new UserBadge($user_auth->getUserIdentifier(), fn() => $user_auth),
-                [new RememberMeBadge()]
+            new UserBadge($user_auth->getUserIdentifier(), fn () => $user_auth),
+            [new RememberMeBadge()]
         );
     }
 
@@ -123,8 +121,7 @@ class PasswordAuthenticator extends AbstractAuthenticator
         $this->authListener->log($user, 'RESET_PASSWORD_EMAIL');
     }
 
-    public function onAuthenticationFailure(Request $request,
-            AuthenticationException $exception): ?Response
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         $request->getSession()->set(SecurityRequestAttributes::AUTHENTICATION_ERROR, $exception);
         $request->getSession()->set(SecurityRequestAttributes::LAST_USERNAME, $request->get('username'));
@@ -133,8 +130,6 @@ class PasswordAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        return new RedirectResponse(
-                $this->getTargetPath($request->getSession(), $firewallName) ?:
-                $this->router->generate($this->authListener->getDefaultRedirectRoute()));
+        return null;
     }
 }

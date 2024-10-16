@@ -62,7 +62,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
 
         // store redirect after login into state
         $redirect = $redirect_after_login ?:
-            $this->redirector->fetchRedirectUrl() ?:
+            $this->redirector->fetchRedirectUrl(false) ?:
             $this->router->generate($this->authListener->getDefaultRedirectRoute(), referenceType: Router::ABSOLUTE_URL);
         $options = ['state' => rtrim(strtr(base64_encode($redirect), '+/', '-_'), '=')];
 
@@ -142,11 +142,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        return new RedirectResponse(
-            $this->getTargetPath($request->getSession(), $firewallName) ?:
-            base64_decode(strtr($request->query->get('state'), '-_', '+/')) ?:
-            $this->router->generate($this->authListener->getDefaultRedirectRoute())
-        );
+        return null;
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
