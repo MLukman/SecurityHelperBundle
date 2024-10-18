@@ -2,6 +2,7 @@
 
 namespace MLukman\SecurityHelperBundle\Authentication;
 
+use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -63,6 +64,9 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
     #[Assert\NotBlank(groups: ['profile'])]
     protected ?string $timezone = null;
 
+    #[ORM\Column(nullable: true)]
+    protected ?bool $blocked = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     protected ?string $blockedReason = null;
 
@@ -80,7 +84,7 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
         $this->username = $username ?: sprintf("%s-%s", $method, $credential);
         $this->method = $method;
         $this->credential = $credential;
-        $this->registered = new \DateTime();
+        $this->registered = new DateTime();
     }
 
     #[Assert\Callback]
@@ -89,8 +93,8 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
         if (empty($this->getEmail()) && $this->getMethod() != 'password') {
             $provider = ucwords($this->getMethod());
             $context->buildViolation("Your email address is missing from your {$provider} profile. Please update your email address there before retrying to sign in here.")
-                    ->atPath('email')
-                    ->addViolation();
+                ->atPath('email')
+                ->addViolation();
         }
     }
 
@@ -217,6 +221,17 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
         return $this;
     }
 
+    public function isBlocked(): ?bool
+    {
+        return !empty($this->blockedReason) || $this->blocked;
+    }
+
+    public function setBlocked(?bool $blocked): self
+    {
+        $this->blocked = $blocked;
+        $this->blockedReason = $blocked ? 'Unknown reason' : null;
+    }
+
     public function getBlockedReason(): ?string
     {
         return $this->blockedReason;
@@ -268,9 +283,9 @@ abstract class UserEntity implements UserInterface, PasswordAuthenticatedUserInt
     public function isEqualTo(UserInterface $user): bool
     {
         return $user instanceof self &&
-                $user->getUserIdentifier() == $this->getUserIdentifier() &&
-                $user->getRoles() == $this->getRoles() &&
-                $user->getAuthSession() == $this->getAuthSession();
+            $user->getUserIdentifier() == $this->getUserIdentifier() &&
+            $user->getRoles() == $this->getRoles() &&
+            $user->getAuthSession() == $this->getAuthSession();
     }
 
     public function eraseCredentials(): void

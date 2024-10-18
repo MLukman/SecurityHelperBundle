@@ -9,6 +9,7 @@ use KnpU\OAuth2ClientBundle\Security\Authenticator\OAuth2Authenticator as KnpUOA
 use KnpU\OAuth2ClientBundle\Security\Exception\IdentityProviderAuthenticationException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use MLukman\DoctrineHelperBundle\Service\ObjectValidator;
+use MLukman\SecurityHelperBundle\Util\CookieInjector;
 use MLukman\SecurityHelperBundle\Util\Redirector;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
@@ -30,6 +31,7 @@ use Symfony\Component\Security\Http\Util\TargetPathTrait;
 class OAuth2Authenticator extends KnpUOAuth2Authenticator
 {
     use TargetPathTrait;
+
     public const OAUTH_REDIRECT_ROUTE = 'security_oauth2_connect_check';
 
     public function __construct(
@@ -41,6 +43,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
         protected Security $security,
         protected RequestStack $requestStack,
         protected Redirector $redirector,
+        protected CookieInjector $cookies,
         #[AutowireIterator('oauth2.authenticator.visitor')] protected iterable $visitors
     ) {
 
@@ -54,10 +57,10 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
 
     public function getRedirectionToProvider(string $client, ?string $redirect_after_login = null): ?RedirectResponse
     {
-        $request = $this->requestStack->getMainRequest();
+        $request = $this->requestStack->getCurrentRequest();
         // store remember me flag if any
-        if ($request->query->get('_remember_me')) {
-            $request->getSession()->set('_remember_me', true);
+        if ($request->query->get('remember')) {
+            $this->cookies->setCookie('sf_security_remember', 1);
         }
 
         // store redirect after login into state
@@ -94,9 +97,9 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
         }
 
         $rememberMe = new RememberMeBadge();
-        if ($request->getSession()->get('_remember_me')) {
+        if ($this->cookies->getCookie('sf_security_remember')) {
             $rememberMe->enable();
-            $request->getSession()->remove('_remember_me');
+            $this->cookies->removeCookie('sf_security_remember');
         }
 
         return new SelfValidatingPassport(

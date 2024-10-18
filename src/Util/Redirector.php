@@ -2,51 +2,22 @@
 
 namespace MLukman\SecurityHelperBundle\Util;
 
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-class Redirector implements EventSubscriberInterface
+use function str_starts_with;
+
+class Redirector
 {
-    public const COOKIEKEY = 'REDIRECT_URL';
+    public const COOKIEKEY = 'sf_security_redirect_after_login';
 
     private ?string $redirectUrl = null;
-    private bool $refreshCookie = false;
 
-    public function __construct(private RequestStack $requestStack, private UrlGeneratorInterface $urlGenerator)
+    public function __construct(private RequestStack $requestStack, private UrlGeneratorInterface $urlGenerator, private CookieInjector $cookieInjector)
     {
 
-    }
-
-    public static function getSubscribedEvents()
-    {
-        return [
-            RequestEvent::class => 'onRequestEvent',
-            ResponseEvent::class => 'onResponseEvent',
-        ];
-    }
-
-    public function onRequestEvent(RequestEvent $event): void
-    {
-        if ($event->getRequest()->cookies->has(self::COOKIEKEY)) {
-            $this->redirectUrl = $event->getRequest()->cookies->get(self::COOKIEKEY);
-        }
-    }
-
-    public function onResponseEvent(ResponseEvent $event): void
-    {
-        if ($this->refreshCookie) {
-            if ($this->redirectUrl) {
-                $event->getResponse()->headers->setCookie(new Cookie(self::COOKIEKEY, $this->redirectUrl));
-            } else {
-                $event->getResponse()->headers->clearCookie(self::COOKIEKEY);
-            }
-        }
     }
 
     protected function storeRedirectUrl(?string $url, bool $overwrite)
@@ -59,18 +30,18 @@ class Redirector implements EventSubscriberInterface
         }
         if ($url) {
             $this->redirectUrl = $url;
-            $this->refreshCookie = true;
+            $this->cookieInjector->setCookie(self::COOKIEKEY, $this->redirectUrl);
         } else {
             $this->redirectUrl = null;
-            $this->refreshCookie = true;
+            $this->cookieInjector->removeCookie(self::COOKIEKEY);
         }
     }
 
     public function fetchRedirectUrl(bool $clear = true): ?string
     {
         $url = $this->redirectUrl;
-        if ($this->request()->cookies->has(self::COOKIEKEY)) {
-            $url = $this->request()->cookies->get(self::COOKIEKEY);
+        if ($this->cookieInjector->hasCookie(self::COOKIEKEY)) {
+            $url = $this->cookieInjector->getCookie(self::COOKIEKEY);
         }
         if (!$url &&
             ($referer = $this->request()->headers->get('referer')) &&
@@ -81,7 +52,7 @@ class Redirector implements EventSubscriberInterface
         }
         if ($clear) {
             $this->redirectUrl = null;
-            $this->refreshCookie = true;
+            $this->cookieInjector->removeCookie(self::COOKIEKEY);
         }
         return $url;
     }

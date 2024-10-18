@@ -12,11 +12,32 @@ use Symfony\Component\HttpFoundation\Response;
 
 class OAuth2Controller extends AbstractController
 {
+    protected bool $useHtmlRedirect = false;
+
+    /**
+     * Set to true to use HTML redirect (using <meta http-equiv="refresh" /> tag) instead of HTTP redirect
+     * @param bool $useHtmlRedirect
+     * @return void
+     */
+    public function setUseHtmlRedirect(bool $useHtmlRedirect): void
+    {
+        $this->useHtmlRedirect = $useHtmlRedirect;
+    }
 
     public function connect(OAuth2Authenticator $oauth2, Redirector $redirector, $client): Response
     {
         $redirector->saveRefererUrl(false);
-        return $oauth2->getRedirectionToProvider($client);
+        $redirectResponse = $oauth2->getRedirectionToProvider($client);
+        if ($this->useHtmlRedirect) {
+            $html = sprintf(
+                '<!DOCTYPE html><html lang="en"><head><meta http-equiv="refresh" content="0; URL=%s" /></head><body><em>Redirecting to %s ...</em></body></html>',
+                htmlentities($redirectResponse->getTargetUrl()),
+                $client
+            );
+            return new Response($html, 200, ['Content-Type' => 'text/html']);
+        } else {
+            return $redirectResponse;
+        }
     }
 
     public function check(OAuth2Authenticator $oauth2, Request $request): Response

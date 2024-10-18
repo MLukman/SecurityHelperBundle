@@ -116,8 +116,6 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
             $this->queryUserEntityFromSecurityUser($securityUser) : null;
 
         if ($user) {
-
-
             $name = ($user->getFullname() ?: $user->getEmail());
             // update last login
             if (($lastlogin = $user->getLastLogin())) {
