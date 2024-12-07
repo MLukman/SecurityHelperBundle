@@ -62,8 +62,8 @@ class User extends UserEntity {
     protected ?int $id = null;
 
     /**
-     * You might want to override this method to handle the scenario where a user is already logged in
-     * proceeds to login with a different method and/or credentials. Applicable forlogin using OAuth only.
+     * You might want to override this method to handle the scenario where a user who is already logged in
+     * proceeds to login with a different method and/or credentials. Applicable for login using OAuth only.
      * Example: make both user entities share the same profile or account
      */
     public function merge(UserEntity $tobemerged)
@@ -87,11 +87,11 @@ Create new User entity object. This method should not save the object to databas
 
 #### queryUserEntity(string $method, string $criteriaField, string $criteriaValue): ?UserEntity
 
-Query a User entity based on method, criteriaField and criteriaValue. This method may return null in no such entity can be found.
+Query a User entity based on method, criteriaField and criteriaValue. This method may return null if no such entity can be found.
 
 #### queryUserEntityFromSecurityUser(UserInterface $securityUser): ?UserEntity
 
-Query a User entity based on the pass UserInterface object. This method may return null in no such entity can be found.
+Query a User entity based on the pass UserInterface object. This method may return null if no such entity can be found.
 
 #### saveUserEntity(UserEntity $user): void
 

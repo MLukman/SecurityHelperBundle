@@ -10,15 +10,10 @@ use KnpU\OAuth2ClientBundle\Security\Exception\IdentityProviderAuthenticationExc
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use MLukman\DoctrineHelperBundle\Service\ObjectValidator;
 use MLukman\SecurityHelperBundle\Util\CookieInjector;
-use MLukman\SecurityHelperBundle\Util\Redirector;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Router;
-use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
@@ -39,10 +34,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
         protected ClientRegistry $clientRegistry,
         protected EntityManagerInterface $entityManager,
         protected ObjectValidator $validator,
-        protected RouterInterface $router,
         protected Security $security,
-        protected RequestStack $requestStack,
-        protected Redirector $redirector,
         protected CookieInjector $cookies,
         #[AutowireIterator('oauth2.authenticator.visitor')] protected iterable $visitors
     ) {
@@ -53,28 +45,6 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
     {
         // continue ONLY if the current ROUTE matches the check ROUTE
         return $request->attributes->get('_route') === self::OAUTH_REDIRECT_ROUTE && $this->authListener->isEnabled();
-    }
-
-    public function getRedirectionToProvider(string $client, ?string $redirect_after_login = null): ?RedirectResponse
-    {
-        $request = $this->requestStack->getCurrentRequest();
-        // store remember me flag if any
-        if ($request->query->get('remember')) {
-            $this->cookies->setCookie('sf_security_remember', 1);
-        }
-
-        // store redirect after login into state
-        $redirect = $redirect_after_login ?:
-            $this->redirector->fetchRedirectUrl(false) ?:
-            $this->router->generate($this->authListener->getDefaultRedirectRoute(), referenceType: Router::ABSOLUTE_URL);
-        $options = ['state' => rtrim(strtr(base64_encode($redirect), '+/', '-_'), '=')];
-
-        // prepare redirect to provider
-        $clientObj = $this->clientRegistry->getClient($client);
-        foreach ($this->visitors as $visitor) {
-            $visitor->prepareRedirectOptions($options, $clientObj);
-        }
-        return $clientObj->redirect([], $options);
     }
 
     public function authenticate(Request $request): Passport

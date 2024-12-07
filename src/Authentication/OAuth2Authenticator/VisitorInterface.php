@@ -10,7 +10,6 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 #[AutoconfigureTag('oauth2.authenticator.visitor')]
 interface VisitorInterface
 {
-
     public function prepareRedirectOptions(array &$options, OAuth2ClientInterface $client);
 
     public function prepareNewUserFromResourceOwner(UserEntity $user, ResourceOwnerInterface $resourceOwner);

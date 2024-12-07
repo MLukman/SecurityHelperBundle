@@ -14,9 +14,7 @@ use MLukman\SecurityHelperBundle\Authentication\UserEntity;
  */
 class FacebookVisitor implements VisitorInterface
 {
-
-    public function prepareNewUserFromResourceOwner(UserEntity $user,
-                                                    ResourceOwnerInterface $resourceOwner)
+    public function prepareNewUserFromResourceOwner(UserEntity $user, ResourceOwnerInterface $resourceOwner)
     {
         if ($resourceOwner instanceof FacebookUser) {
             $user->setFullname($resourceOwner->getName());
@@ -24,8 +22,7 @@ class FacebookVisitor implements VisitorInterface
         }
     }
 
-    public function prepareRedirectOptions(array &$options,
-                                           OAuth2ClientInterface $client)
+    public function prepareRedirectOptions(array &$options, OAuth2ClientInterface $client)
     {
 
     }

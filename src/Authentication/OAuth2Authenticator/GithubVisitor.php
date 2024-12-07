@@ -3,20 +3,21 @@
 namespace MLukman\SecurityHelperBundle\Authentication\OAuth2Authenticator;
 
 use KnpU\OAuth2ClientBundle\Client\OAuth2ClientInterface;
+use KnpU\OAuth2ClientBundle\Client\Provider\GithubClient;
+use League\OAuth2\Client\Provider\GithubResourceOwner;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use MLukman\SecurityHelperBundle\Authentication\UserEntity;
-use Stevenmaguire\OAuth2\Client\Provider\KeycloakResourceOwner;
 
 /**
- * Description of KeycloakVisitor
+ * Description of GithubVisitor
  *
  * @author Lukman
  */
-class KeycloakVisitor implements VisitorInterface
+class GithubVisitor implements VisitorInterface
 {
     public function prepareNewUserFromResourceOwner(UserEntity $user, ResourceOwnerInterface $resourceOwner)
     {
-        if ($resourceOwner instanceof KeycloakResourceOwner) {
+        if ($resourceOwner instanceof GithubResourceOwner) {
             $user->setFullname($resourceOwner->getName());
             $user->setEmail($resourceOwner->getEmail());
         }
@@ -24,6 +25,8 @@ class KeycloakVisitor implements VisitorInterface
 
     public function prepareRedirectOptions(array &$options, OAuth2ClientInterface $client)
     {
+        if ($client instanceof GithubClient) {
 
+        }
     }
 }

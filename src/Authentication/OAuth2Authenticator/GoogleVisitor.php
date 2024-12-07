@@ -15,10 +15,10 @@ use MLukman\SecurityHelperBundle\Authentication\UserEntity;
  */
 class GoogleVisitor implements VisitorInterface
 {
-
     public function prepareNewUserFromResourceOwner(UserEntity $user, ResourceOwnerInterface $resourceOwner)
     {
         if ($resourceOwner instanceof GoogleUser) {
+            $user->setFullname($resourceOwner->getName());
             $user->setEmail($resourceOwner->getEmail());
         }
     }
