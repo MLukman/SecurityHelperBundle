@@ -38,6 +38,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     protected ReCaptchaUtil $recaptcha;
     protected ?AuthenticationRepositoryInterface $authRepository;
     protected iterable $auditLoggers;
+    protected ?UserInterface $currentUser;
 
     #[Required]
     public function requiredByAAL(
@@ -64,6 +65,11 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
             throw new AutowiringFailedException(AuthenticationRepositoryInterface::class, self::class . ' requires ' . AuthenticationRepositoryInterface::class . ' to be implemented and aliased by the application.');
         }
         return $this->authRepository;
+    }
+
+    public function getSecurity(): Security
+    {
+        return $this->security;
     }
 
     public function log(UserEntity $user, string $event, array $details = []): void
@@ -198,8 +204,11 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
 
     public function currentUser(): ?UserEntity
     {
-        return ($securityUser = $this->security->getUser()) ?
-            $this->queryUserEntityFromSecurityUser($this->security->getUser()) : null;
+        if (!isset($this->currentUser)) {
+            $this->currentUser = ($securityUser = $this->security->getUser()) ?
+                $this->queryUserEntityFromSecurityUser($securityUser) : null;
+        }
+        return $this->currentUser;
     }
 
     public function queryUserEntityFromSecurityUser(UserInterface $securityUser): ?UserEntity

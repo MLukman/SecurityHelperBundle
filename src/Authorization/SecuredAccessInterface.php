@@ -8,20 +8,11 @@ namespace MLukman\SecurityHelperBundle\Authorization;
  */
 interface SecuredAccessInterface
 {
-
     /**
      * Check if a specific user role is allowed to access
      * @param string $role User role
      * @param string $attribute Attribute
      * @return bool
      */
-    public function isRoleAllowed(string $role, string $attribute): bool;
-
-    /**
-     * Check if a specific username is allowed to access this context
-     * @param string $username Username
-     * @param string $attribute Attribute
-     * @return bool
-     */
-    public function isUsernameAllowed(string $username, string $attribute): bool;
+    public function isAccessAllowed(string $userIdentifier, array $roles, string $attribute): bool;
 }

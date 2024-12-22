@@ -59,7 +59,7 @@ class UserRolesCommand extends Command
                 $role = null;
             }
             if ($role && $roles == $user->getRoles()) {
-                $io->warning(sprintf('For some reason, your application logic resisted the addition/removal of the role. Please check the logic inside "addRole()" or "removeRole()" methods of the class %s.', get_class($user)));
+                $io->warning(sprintf('For some reason, your application logic resisted the addition/removal of the role. Please check the logic inside "setRoles()" method of the class %s.', get_class($user)));
             } else {
                 $roles = $user->getRoles();
             }

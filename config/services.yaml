@@ -11,6 +11,9 @@ services:
     MLukman\SecurityHelperBundle\Authentication\:
         resource: '../src/Authentication/'
 
+    MLukman\SecurityHelperBundle\Authorization\:
+        resource: '../src/Authorization/'
+
     MLukman\SecurityHelperBundle\Command\:
         resource: '../src/Command/'
 

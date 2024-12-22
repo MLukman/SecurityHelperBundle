@@ -2,6 +2,7 @@
 
 namespace MLukman\SecurityHelperBundle\Authorization;
 
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
@@ -11,6 +12,10 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
  */
 class SecuredAccessVoter extends Voter
 {
+    public function __construct(private Security $security)
+    {
+        
+    }
 
     /**
      * Determines if the attribute and subject are supported by this voter.
@@ -34,8 +39,7 @@ class SecuredAccessVoter extends Voter
      *
      * @return bool
      */
-    protected function voteOnAttribute(string|array $attribute, mixed $subject,
-            TokenInterface $token): bool
+    protected function voteOnAttribute(string|array $attribute, mixed $subject, TokenInterface $token): bool
     {
         if (is_array($attribute)) {
             foreach ($attribute as $attr) {
@@ -47,16 +51,6 @@ class SecuredAccessVoter extends Voter
         }
 
         /* @var $subject SecuredAccessInterface */
-        if ($subject->isUsernameAllowed($this->ds->getUser()->getId(), $attribute)) {
-            return true;
-        }
-
-        foreach ($token->getRoleNames() as $role) {
-            if ($subject->isRoleAllowed($role, $attribute)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $subject->isAccessAllowed($token->getUserIdentifier(), $token->getRoleNames(), $attribute);
     }
 }
