@@ -5,7 +5,6 @@ namespace MLukman\SecurityHelperBundle\Authentication;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use MLukman\DoctrineHelperBundle\Service\ObjectValidator;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;

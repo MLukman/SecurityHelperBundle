@@ -13,9 +13,9 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Contracts\Service\Attribute\Required;
 
 #[AsCommand(
-    name: 'security:user:block',
-    description: 'Block a user',
-)]
+        name: 'security:user:block',
+        description: 'Block a user',
+    )]
 class UserBlockCommand extends Command
 {
     protected ?AuthenticationRepositoryInterface $authRepository;
@@ -44,7 +44,7 @@ class UserBlockCommand extends Command
         $username = $input->getArgument('username');
         $reason = $input->getArgument('reason');
 
-        $user = $this->authRepository->queryUserEntityByUsername($username);
+        $user = $this->authRepository->getUserEntityRepository()->findOneBy(['username' => $username]);
         if (!$user) {
             $io->error(sprintf("User with username '%s' is not found", $username));
             return Command::FAILURE;

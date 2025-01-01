@@ -137,6 +137,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
                 $this->log($user, 'LOGIN');
             }
             $user->setLastLogin(new DateTime());
+            $user->setAuthSession($this->repo()->generateAuthSession($user));
 
             // read user's language
             if ($user && ($userLanguage = $user->getLanguage())) {
@@ -194,7 +195,10 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
 
     public function queryUserEntity(string $method, string $criteriaField, string $criteriaValue, bool $ignoreBlocked = false): ?UserEntity
     {
-        $user = $this->repo()->queryUserEntity($method, $criteriaField, $criteriaValue);
+        $user = $this->repo()->getUserEntityRepository()->findOneBy([
+            'method' => $method,
+            $criteriaField => $criteriaValue,
+        ]);
         if ($user && ($block = $user->getBlockedReason()) && !$ignoreBlocked) { // User blocked
             throw new CustomUserMessageAuthenticationException(sprintf('Sorry but you have been blocked from logging in with the following reason: %s. Please contact an administrator if you think it is a mistake.', $block));
         }
@@ -213,7 +217,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
 
     public function queryUserEntityFromSecurityUser(UserInterface $securityUser): ?UserEntity
     {
-        return $this->repo()->queryUserEntityFromSecurityUser($securityUser);
+        return $this->repo()->getUserEntityRepository()->findOneBy(['username' => $securityUser->getUserIdentifier()]);
     }
 
     public function saveUserEntity(UserEntity $user): void

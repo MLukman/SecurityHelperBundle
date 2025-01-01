@@ -42,7 +42,7 @@ class UserUnblockCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $username = $input->getArgument('username');
 
-        $user = $this->authRepository->queryUserEntityByUsername($username);
+        $user = $this->authRepository->getUserEntityRepository()->findOneBy(['username' => $username]);
         if (!$user) {
             $io->error(sprintf("User with username '%s' is not found", $username));
             return Command::FAILURE;

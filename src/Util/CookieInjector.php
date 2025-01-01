@@ -13,11 +13,10 @@ class CookieInjector implements EventSubscriberInterface
 
     public function __construct(protected RequestStack $requestStack)
     {
-
+        
     }
 
-
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             ResponseEvent::class => 'onResponseEvent',

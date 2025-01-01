@@ -6,7 +6,6 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-
 use function str_starts_with;
 
 class Redirector
@@ -17,7 +16,7 @@ class Redirector
 
     public function __construct(private RequestStack $requestStack, private UrlGeneratorInterface $urlGenerator, private CookieInjector $cookieInjector)
     {
-
+        
     }
 
     protected function storeRedirectUrl(?string $url, bool $overwrite)

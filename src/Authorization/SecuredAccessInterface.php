@@ -9,8 +9,9 @@ namespace MLukman\SecurityHelperBundle\Authorization;
 interface SecuredAccessInterface
 {
     /**
-     * Check if a specific user role is allowed to access
-     * @param string $role User role
+     * Check if a specific user identifier is allowed to access
+     * @param string $userIdentifier User identifier
+     * @param array $roles User roles
      * @param string $attribute Attribute
      * @return bool
      */

@@ -2,7 +2,7 @@
 
 namespace MLukman\SecurityHelperBundle\Authentication;
 
-use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityRepository;
 
 interface AuthenticationRepositoryInterface
 {
@@ -10,11 +10,9 @@ interface AuthenticationRepositoryInterface
 
     public function newUserEntity(string $method, string $credential, string $username = null): UserEntity;
 
-    public function queryUserEntity(string $method, string $criteriaField, string $criteriaValue): ?UserEntity;
-
-    public function queryUserEntityByUsername(string $username): ?UserEntity;
-
-    public function queryUserEntityFromSecurityUser(UserInterface $securityUser): ?UserEntity;
+    public function getUserEntityRepository(): EntityRepository;
+    
+    public function generateAuthSession(UserEntity $user): string;
 
     public function saveUserEntity(UserEntity $user): void;
 
