@@ -2,7 +2,6 @@
 
 namespace MLukman\SecurityHelperBundle\Authentication;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use KnpU\OAuth2ClientBundle\Security\Authenticator\OAuth2Authenticator as KnpUOAuth2Authenticator;
@@ -32,7 +31,6 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
     public function __construct(
         private AuthenticationListener $authListener,
         protected ClientRegistry $clientRegistry,
-        protected EntityManagerInterface $entityManager,
         protected ObjectValidator $validator,
         protected Security $security,
         protected CookieInjector $cookies,
@@ -84,7 +82,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
 
         if (!($user = $this->authListener->queryUserEntity($clientId, 'credential', $uid))) {
             // create new user
-            $user = $this->authListener->newUserEntity($clientId, $uid);
+            $user = $this->authListener->repo()->newUserEntity($clientId, $uid);
 
             // let visitors populate it
             foreach ($this->visitors as $visitor) {
@@ -97,7 +95,6 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
             }
         }
 
-        $user->setAuthSession(bin2hex(random_bytes(16)));
         if (($errors = $this->validator->validate($user))) {
             $errorMessages = [];
             foreach ($errors as $f => $errorArray) {
@@ -107,8 +104,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
             }
             throw new Exception(join(' ', $errorMessages));
         }
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+        $this->authListener->repo()->saveUserEntity($user);
 
         return $user;
     }
