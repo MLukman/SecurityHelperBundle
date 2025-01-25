@@ -13,7 +13,7 @@ class CookieInjector implements EventSubscriberInterface
 
     public function __construct(protected RequestStack $requestStack)
     {
-        
+
     }
 
     public static function getSubscribedEvents(): array
@@ -28,12 +28,16 @@ class CookieInjector implements EventSubscriberInterface
         return isset($this->cookies[$key]) || $this->requestStack->getMainRequest()->cookies->has($key);
     }
 
-    public function getCookie(string $key): ?string
+    public function getCookie(string $key, bool $remove = false): ?string
     {
-        return $this->cookies[$key] ?? $this->requestStack->getMainRequest()->cookies->get($key);
+        $cookie = $this->cookies[$key] ?? $this->requestStack->getMainRequest()->cookies->get($key);
+        if ($remove) {
+            $this->cookies[$key] = null;
+        }
+        return $cookie;
     }
 
-    public function setCookie(string $key, string $value): void
+    public function setCookie(string $key, ?string $value): void
     {
         $this->cookies[$key] = $value;
     }

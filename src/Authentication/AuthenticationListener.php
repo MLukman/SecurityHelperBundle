@@ -12,7 +12,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
@@ -28,9 +28,6 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class AuthenticationListener implements AuthenticationEntryPointInterface, EventSubscriberInterface
 {
-    public const MESSAGE_WELCOME = 'Welcome, %s.';
-    public const MESSAGE_WELCOME_BACK = 'Welcome back, %s. Your last login was on %s.';
-
     protected Security $security;
     protected UrlGeneratorInterface $urlGenerator;
     protected CsrfTokenManagerInterface $csrfTokenManager;
@@ -93,8 +90,9 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     public static function getSubscribedEvents(): array
     {
         return [
-            LoginSuccessEvent::class => 'onLogin',
-            LogoutEvent::class => 'onLogout',
+            LoginSuccessEvent::class => ['onLogin', -999],
+            LogoutEvent::class => ['onLogout', -999],
+            ControllerEvent::class => ['onController', -999],
         ];
     }
 
@@ -116,35 +114,32 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         }
     }
 
+    public function onController(ControllerEvent $event): void
+    {
+        // store the page URL that redirect to login page in order to redirect back after login
+        if ('security_login' == $event->getRequest()->attributes->get('_route')) {
+            $this->redirector->saveRefererUrl();
+        }
+    }
+
     public function onLogin(LoginSuccessEvent $event): void
     {
         $user = ($securityUser = $this->security->getUser()) ?
             $this->queryUserEntityFromSecurityUser($securityUser) : null;
 
         if ($user) {
-            $name = ($user->getFullname() ?: $user->getEmail());
-            // update last login
-            if (($lastlogin = $user->getLastLogin())) {
-                $welcome = sprintf(self::MESSAGE_WELCOME_BACK, $name, $lastlogin->format('Y-m-d h:i A'));
-            } else {
-                $welcome = sprintf(self::MESSAGE_WELCOME, $name);
-            }
-
-            $session = $event->getRequest()->getSession();
-            if ($session instanceof FlashBagAwareSessionInterface) {
-                $session->getFlashBag()->clear();
-                $session->getFlashBag()->add('info', $welcome);
-                $this->log($user, 'LOGIN');
-            }
+            $lastlogin = $user->getLastLogin();
+            $this->log($user, 'LOGIN');
             $user->setLastLogin(new DateTime());
             $user->setAuthSession($this->repo()->generateAuthSession($user));
 
             // read user's language
             if ($user && ($userLanguage = $user->getLanguage())) {
-                $session->set('_locale', $userLanguage);
+                $event->getRequest()->getSession()->set('_locale', $userLanguage);
             }
 
-            $this->saveUserEntity($user);
+            $this->repo()->saveUserEntity($user);
+            $this->repo()->onAuthenticationSuccess($event->getRequest(), $user, $lastlogin);
         }
 
         // redirect
@@ -188,6 +183,15 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         return 'security_logout';
     }
 
+    public function currentUser(): ?UserEntity
+    {
+        if (!isset($this->currentUser)) {
+            $this->currentUser = ($securityUser = $this->security->getUser()) ?
+                $this->queryUserEntityFromSecurityUser($securityUser) : null;
+        }
+        return $this->currentUser;
+    }
+
     public function newUserEntity(string $method, string $credential, string $username = null): UserEntity
     {
         return $this->repo()->newUserEntity($method, $credential, $username);
@@ -206,31 +210,19 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         return $user;
     }
 
-    public function currentUser(): ?UserEntity
-    {
-        if (!isset($this->currentUser)) {
-            $this->currentUser = ($securityUser = $this->security->getUser()) ?
-                $this->queryUserEntityFromSecurityUser($securityUser) : null;
-        }
-        return $this->currentUser;
-    }
-
     public function queryUserEntityFromSecurityUser(UserInterface $securityUser): ?UserEntity
     {
         return $this->repo()->getUserEntityRepository()->findOneBy(['username' => $securityUser->getUserIdentifier()]);
     }
 
-    public function saveUserEntity(UserEntity $user): void
+    public function saveUserEntity(UserEntity &$user): void
     {
         $this->repo()->saveUserEntity($user);
     }
 
     public function handleAuthenticationFailure(Request $request, AuthenticatorInterface $authenticator, AuthenticationException $exception): ?Response
     {
-        $session = $request->getSession();
-        if ($session instanceof FlashBagAwareSessionInterface) {
-            $session->getFlashBag()->add('warning', strtr($exception->getMessageKey(), $exception->getMessageData()));
-        }
+        $this->repo()->onAuthenticationFailure($request, $authenticator, $exception);
         return new RedirectResponse($this->urlGenerator->generate($this->getLoginRoute()));
     }
 }

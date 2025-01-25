@@ -16,13 +16,12 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class LDAPAuthenticator extends PasswordAuthenticator
 {
-
     protected ?Ldap $ldap;
 
     #[Required]
     public function requiredByLdapAuth(?Ldap $ldap)
     {
-        
+
         $this->ldap = $ldap;
     }
 
@@ -50,14 +49,15 @@ class LDAPAuthenticator extends PasswordAuthenticator
         $newUserEmail = null;
         try {
             if (($searchDn = $_ENV['LDAP_SEARCH_DN']) &&
-                    // If search DN, password & filter are provided, use LDAP query to find the user DN
-                    ($searchPassword = $_ENV['LDAP_SEARCH_PASSWORD']) &&
-                    ($searchFilter = $_ENV['LDAP_SEARCH_FILTER'])) {
+                // If search DN, password & filter are provided, use LDAP query to find the user DN
+                ($searchPassword = $_ENV['LDAP_SEARCH_PASSWORD']) &&
+                ($searchFilter = $_ENV['LDAP_SEARCH_FILTER'])) {
                 $this->ldap->bind($searchDn, $searchPassword);
                 $filter = str_replace(
-                        ['{uid_key}', '{username}'],
-                        [$uidKey, $username],
-                        $searchFilter);
+                    ['{uid_key}', '{username}'],
+                    [$uidKey, $username],
+                    $searchFilter
+                );
                 $entries = $this->ldap->query($baseDn, $filter)->execute();
                 if ($entries->count() != 1) {
                     throw new CustomUserMessageAuthenticationException("LDAP account matching your username: " . $entries->count());
@@ -97,25 +97,23 @@ class LDAPAuthenticator extends PasswordAuthenticator
         }
 
         if (!$user_auth) {
-            $user_auth = $this->authListener->newUserEntity('ldap', $userDn, $userDn);
+            $user_auth = $this->authListener->repo()->newUserEntity('ldap', $userDn, $userDn);
             // get & populate email
             if (empty($newUserEmail) &&
-                    ($entries = $this->ldap->query($baseDn, $uidFilter)->execute()) &&
-                    ($emailAttribute = $entries[0]->getAttribute($emailAttr))) {
+                ($entries = $this->ldap->query($baseDn, $uidFilter)->execute()) &&
+                ($emailAttribute = $entries[0]->getAttribute($emailAttr))) {
                 $newUserEmail = $emailAttribute[0];
             }
             $user_auth->setEmail($newUserEmail ?: $username . "@ldap");
-            $this->entityManager->persist($user_auth);
             $this->auditLogger->log($user_auth, 'REGISTER');
         }
 
         $user_auth->setAuthSession(bin2hex(random_bytes(16)));
-        $this->entityManager->flush();
-        $this->entityManager->refresh($user_auth);
+        $this->authListener->repo()->saveUserEntity($user_auth);
 
         return new SelfValidatingPassport(
-                new UserBadge($user_auth->getUserIdentifier(), fn() => $user_auth),
-                [new RememberMeBadge()]
+            new UserBadge($user_auth->getUserIdentifier(), fn () => $user_auth),
+            [new RememberMeBadge()]
         );
     }
 }

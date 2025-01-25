@@ -9,18 +9,14 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 class SecurityHelperBundle extends AbstractBundle
 {
-
-    public function loadExtension(array $config,
-            ContainerConfigurator $container,
-            ContainerBuilder $builder): void
+    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $container->import('../config/services.yaml');
         $builder->registerForAutoconfiguration(AuditLoggerInterface::class)
-                ->addTag('security.audit.logger');
+            ->addTag('security.audit.logger');
     }
 
-    public function prependExtension(ContainerConfigurator $container,
-            ContainerBuilder $builder): void
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $configs = $builder->getExtensionConfig('knpu_oauth2_client');
         foreach (array_reverse($configs) as &$config) {

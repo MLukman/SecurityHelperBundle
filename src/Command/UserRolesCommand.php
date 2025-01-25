@@ -49,7 +49,7 @@ class UserRolesCommand extends Command
         }
         $roles = $user->getRoles();
 
-        while (($role = strtoupper($io->ask(sprintf("Current roles are %s. Please enter a new role to add, or an existing role to remove. Enter none to save and exit", \json_encode($roles)))))) {
+        while (($role = strtoupper($io->ask(sprintf("Current roles are %s. Please enter a new role to add, or a current role to remove. Enter none to save and exit", \json_encode($roles))) ?: ''))) {
             if (in_array($role, $roles)) {
                 $user->removeRole($role);
             } elseif (str_starts_with($role, 'ROLE_')) {
