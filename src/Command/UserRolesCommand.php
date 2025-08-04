@@ -13,9 +13,9 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Contracts\Service\Attribute\Required;
 
 #[AsCommand(
-    name: 'security:user:roles',
-    description: 'Modify roles of a user',
-)]
+        name: 'security:user:roles',
+        description: 'Modify roles of a user',
+    )]
 class UserRolesCommand extends Command
 {
     protected ?AuthenticationRepositoryInterface $authRepository;

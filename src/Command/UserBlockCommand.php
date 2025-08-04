@@ -3,6 +3,7 @@
 namespace MLukman\SecurityHelperBundle\Command;
 
 use MLukman\SecurityHelperBundle\Authentication\AuthenticationRepositoryInterface;
+use MLukman\SecurityHelperBundle\Util\SecurityEvent;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -53,7 +54,7 @@ class UserBlockCommand extends Command
         $user->setBlockedReason($reason);
         $this->authRepository->saveUserEntity($user);
         foreach ($this->auditLoggers as $auditLogger) {
-            $auditLogger->logAuthentication($user, 'BLOCKED', [
+            $auditLogger->logAuthentication($user, SecurityEvent::BLOCKED, [
                 'source' => __CLASS__
             ]);
         }

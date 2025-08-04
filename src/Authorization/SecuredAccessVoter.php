@@ -4,6 +4,7 @@ namespace MLukman\SecurityHelperBundle\Authorization;
 
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
@@ -39,11 +40,16 @@ class SecuredAccessVoter extends Voter
      *
      * @return bool
      */
-    protected function voteOnAttribute(string|array $attribute, mixed $subject, TokenInterface $token): bool
-    {
+    protected function voteOnAttribute(
+        string|array $attribute, mixed $subject, TokenInterface $token,
+        ?Vote $vote = null
+    ): bool {
         if (is_array($attribute)) {
             foreach ($attribute as $attr) {
                 if ($this->voteOnAttribute($attr, $subject, $token)) {
+                    if ($vote) {
+                        $vote->addReason(sprintf("Attribute '%s' is allowed access.", $attr));
+                    }
                     return true;
                 }
             }
@@ -51,6 +57,10 @@ class SecuredAccessVoter extends Voter
         }
 
         /* @var $subject SecuredAccessInterface */
-        return $subject->isAccessAllowed($token->getUserIdentifier(), $token->getRoleNames(), $attribute);
+        $allowed = $subject->isAccessAllowed($token->getUserIdentifier(), $token->getRoleNames(), $attribute);
+        if ($allowed && $vote) {
+            $vote->addReason(sprintf("Attribute '%s' is allowed access.", $attribute));
+        }
+        return $allowed;
     }
 }

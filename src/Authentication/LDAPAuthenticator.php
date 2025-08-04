@@ -3,6 +3,7 @@
 namespace MLukman\SecurityHelperBundle\Authentication;
 
 use Exception;
+use MLukman\SecurityHelperBundle\Util\SecurityEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Ldap\Exception\ConnectionException;
 use Symfony\Component\Ldap\Exception\InvalidCredentialsException;
@@ -48,10 +49,12 @@ class LDAPAuthenticator extends PasswordAuthenticator
 
         $newUserEmail = null;
         try {
-            if (($searchDn = $_ENV['LDAP_SEARCH_DN']) &&
+            if (
+                ($searchDn = $_ENV['LDAP_SEARCH_DN']) &&
                 // If search DN, password & filter are provided, use LDAP query to find the user DN
                 ($searchPassword = $_ENV['LDAP_SEARCH_PASSWORD']) &&
-                ($searchFilter = $_ENV['LDAP_SEARCH_FILTER'])) {
+                ($searchFilter = $_ENV['LDAP_SEARCH_FILTER'])
+            ) {
                 $this->ldap->bind($searchDn, $searchPassword);
                 $filter = str_replace(
                     ['{uid_key}', '{username}'],
@@ -89,7 +92,7 @@ class LDAPAuthenticator extends PasswordAuthenticator
             $this->ldap->bind($userDn, $password);
         } catch (InvalidCredentialsException $ex) {
             if ($user_auth) {
-                $this->authListener->log($user_auth, 'LOGIN_FAILURE');
+                $this->authListener->log($user_auth, SecurityEvent::LOGIN_FAILURE);
             }
             throw new CustomUserMessageAuthenticationException($ex->getMessage());
         } catch (ConnectionException $ex) {
@@ -105,14 +108,14 @@ class LDAPAuthenticator extends PasswordAuthenticator
                 $newUserEmail = $emailAttribute[0];
             }
             $user_auth->setEmail($newUserEmail ?: $username . "@ldap");
-            $this->auditLogger->log($user_auth, 'REGISTER');
+            $this->auditLogger->log($user_auth, SecurityEvent::REGISTER);
         }
 
         $user_auth->setAuthSession(bin2hex(random_bytes(16)));
         $this->authListener->repo()->saveUserEntity($user_auth);
 
         return new SelfValidatingPassport(
-            new UserBadge($user_auth->getUserIdentifier(), fn () => $user_auth),
+            new UserBadge($user_auth->getUserIdentifier(), fn() => $user_auth),
             [new RememberMeBadge()]
         );
     }

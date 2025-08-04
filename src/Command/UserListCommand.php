@@ -15,9 +15,9 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Contracts\Service\Attribute\Required;
 
 #[AsCommand(
-    name: 'security:user:list',
-    description: 'List all users',
-)]
+        name: 'security:user:list',
+        description: 'List all users',
+    )]
 class UserListCommand extends Command
 {
     protected ?AuthenticationRepositoryInterface $authRepository;

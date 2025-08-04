@@ -5,6 +5,7 @@ namespace MLukman\SecurityHelperBundle\Authentication;
 use DateTime;
 use MLukman\SecurityHelperBundle\Util\ReCaptchaUtil;
 use MLukman\SecurityHelperBundle\Util\Redirector;
+use MLukman\SecurityHelperBundle\Util\SecurityEvent;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\DependencyInjection\Exception\AutowiringFailedException;
@@ -69,7 +70,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         return $this->security;
     }
 
-    public function log(UserEntity $user, string $event, array $details = []): void
+    public function log(UserEntity $user, SecurityEvent $event, array $details = []): void
     {
         foreach ($this->auditLoggers as $auditLogger) {
             $auditLogger->logAuthentication($user, $event, $details);
@@ -129,7 +130,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
 
         if ($user) {
             $lastlogin = $user->getLastLogin();
-            $this->log($user, 'LOGIN');
+            $this->log($user, SecurityEvent::LOGIN);
             $user->setLastLogin(new DateTime());
             $user->setAuthSession($this->repo()->generateAuthSession($user));
 
@@ -157,7 +158,7 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
     public function onLogout(LogoutEvent $event): void
     {
         if ($event->getToken()) {
-            $this->log($event->getToken()->getUser(), 'LOGOUT');
+            $this->log($event->getToken()->getUser(), SecurityEvent::LOGOUT);
         }
         // redirect to redirect_uri query parameter or default redirect route
         $redirect_uri = $event->getRequest()->query->get('redirect_uri') ?: $this->urlGenerator->generate($this->getDefaultRedirectRoute());
@@ -197,8 +198,12 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         return $this->repo()->newUserEntity($method, $credential, $username);
     }
 
-    public function queryUserEntity(string $method, string $criteriaField, string $criteriaValue, bool $ignoreBlocked = false): ?UserEntity
-    {
+    public function queryUserEntity(
+        string $method,
+        string $criteriaField,
+        string $criteriaValue,
+        bool $ignoreBlocked = false
+    ): ?UserEntity {
         $user = $this->repo()->getUserEntityRepository()->findOneBy([
             'method' => $method,
             $criteriaField => $criteriaValue,

@@ -3,6 +3,7 @@
 namespace MLukman\SecurityHelperBundle\Command;
 
 use MLukman\SecurityHelperBundle\Authentication\AuthenticationRepositoryInterface;
+use MLukman\SecurityHelperBundle\Util\SecurityEvent;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -13,9 +14,9 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Contracts\Service\Attribute\Required;
 
 #[AsCommand(
-    name: 'security:user:delete',
-    description: 'Delete a user',
-)]
+        name: 'security:user:delete',
+        description: 'Delete a user',
+    )]
 class UserDeleteCommand extends Command
 {
     protected ?AuthenticationRepositoryInterface $authRepository;
@@ -48,7 +49,7 @@ class UserDeleteCommand extends Command
             return Command::FAILURE;
         }
         foreach ($this->auditLoggers as $auditLogger) {
-            $auditLogger->logAuthentication($user, 'DELETED', [
+            $auditLogger->logAuthentication($user, SecurityEvent::DELETED, [
                 'source' => __CLASS__
             ]);
         }

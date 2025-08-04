@@ -3,6 +3,7 @@
 namespace MLukman\SecurityHelperBundle\Command;
 
 use MLukman\SecurityHelperBundle\Authentication\AuthenticationRepositoryInterface;
+use MLukman\SecurityHelperBundle\Util\SecurityEvent;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -13,9 +14,9 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Contracts\Service\Attribute\Required;
 
 #[AsCommand(
-    name: 'security:user:unblock',
-    description: 'Unblock a user',
-)]
+        name: 'security:user:unblock',
+        description: 'Unblock a user',
+    )]
 class UserUnblockCommand extends Command
 {
     protected ?AuthenticationRepositoryInterface $authRepository;
@@ -55,7 +56,7 @@ class UserUnblockCommand extends Command
         $user->setBlockedReason(null);
         $this->authRepository->saveUserEntity($user);
         foreach ($this->auditLoggers as $auditLogger) {
-            $auditLogger->logAuthentication($user, 'UNBLOCKED', [
+            $auditLogger->logAuthentication($user, SecurityEvent::UNBLOCKED, [
                 'source' => __CLASS__
             ]);
         }

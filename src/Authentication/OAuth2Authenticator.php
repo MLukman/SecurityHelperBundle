@@ -24,6 +24,7 @@ use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 class OAuth2Authenticator extends KnpUOAuth2Authenticator
 {
+
     use TargetPathTrait;
 
     public const OAUTH_REDIRECT_ROUTE = 'security_oauth2_connect_check';
@@ -36,7 +37,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
         protected CookieInjector $cookies,
         #[AutowireIterator('oauth2.authenticator.visitor')] protected iterable $visitors
     ) {
-
+        
     }
 
     public function supports(Request $request): ?bool
@@ -71,7 +72,7 @@ class OAuth2Authenticator extends KnpUOAuth2Authenticator
         }
 
         return new SelfValidatingPassport(
-            new UserBadge($accessToken->getToken(), fn () => $authenticatedUser),
+            new UserBadge($accessToken->getToken(), fn() => $authenticatedUser),
             [$rememberMe]
         );
     }

@@ -4,6 +4,7 @@ namespace MLukman\SecurityHelperBundle\Authentication;
 
 use Exception;
 use MLukman\DoctrineHelperBundle\Service\ObjectValidator;
+use MLukman\SecurityHelperBundle\Util\SecurityEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
@@ -27,6 +28,7 @@ use Symfony\Component\Security\Http\Util\TargetPathTrait;
  */
 class PasswordAuthenticator extends AbstractAuthenticator
 {
+
     use TargetPathTrait;
 
     public const DEFAULT_REDIRECT_ROUTE = 'app_home';
@@ -39,7 +41,7 @@ class PasswordAuthenticator extends AbstractAuthenticator
         protected UserPasswordHasherInterface $passwordEncoder,
         protected MailerInterface $mailer
     ) {
-
+        
     }
 
     public function supports(Request $request): ?bool
@@ -71,22 +73,22 @@ class PasswordAuthenticator extends AbstractAuthenticator
 
         if (($reset_code = $request->query->get('reset_code'))) {
             if ($reset_code != $user_auth->getResetCode()) {
-                $this->authListener->log($user_auth, 'RESET_PASSWORD_FAILURE');
+                $this->authListener->log($user_auth, SecurityEvent::RESET_PASSWORD_FAILURE);
                 throw new CustomUserMessageAuthenticationException('Invalid reset code.');
             }
             // reset password
             $user_auth->setPassword($this->passwordEncoder->hashPassword($user_auth, $password));
             $user_auth->setResetCode(null);
-            $this->authListener->log($user_auth, 'RESET_PASSWORD_SUCCESS');
+            $this->authListener->log($user_auth, SecurityEvent::RESET_PASSWORD_SUCCESS);
         } elseif (!$this->passwordEncoder->isPasswordValid($user_auth, $password)) {
-            $this->authListener->log($user_auth, 'LOGIN_FAILURE');
+            $this->authListener->log($user_auth, SecurityEvent::LOGIN_FAILURE);
             throw new CustomUserMessageAuthenticationException('Invalid credentials');
         }
 
         $this->authListener->repo()->saveUserEntity($user_auth);
 
         return new SelfValidatingPassport(
-            new UserBadge($user_auth->getUserIdentifier(), fn () => $user_auth),
+            new UserBadge($user_auth->getUserIdentifier(), fn() => $user_auth),
             [new RememberMeBadge()]
         );
     }
@@ -113,7 +115,7 @@ class PasswordAuthenticator extends AbstractAuthenticator
         $user->setResetCode(md5($user->getEmail() . ':' . time()));
         $this->authListener->repo()->sendResetPasswordEmail($user);
         $this->authListener->repo()->saveUserEntity($user);
-        $this->authListener->log($user, 'RESET_PASSWORD_EMAIL');
+        $this->authListener->log($user, SecurityEvent::RESET_PASSWORD_EMAIL);
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
