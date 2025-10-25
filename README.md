@@ -135,7 +135,7 @@ Add a YAML file named `security_helper.yaml` with the following content into you
 
 ```yaml
 security_helper:
-    resource: '@SecurityHelperBundle/src/Resources/config/routes.xml'
+    resource: '@SecurityHelperBundle/config/routes.yaml'
     prefix: /@auth
 ```
 

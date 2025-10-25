@@ -1,0 +1,14 @@
+security_oauth2_connect_start:
+  path: /connect/{client}
+  controller: MLukman\SecurityHelperBundle\Controller\OAuth2Controller::connect
+
+security_oauth2_connect_check:
+  path: /connect/{client}/check
+  controller: MLukman\SecurityHelperBundle\Controller\OAuth2Controller::check
+
+security_login:
+  path: /login
+  controller: MLukman\SecurityHelperBundle\Controller\LoginControllerInterface::login
+
+security_logout:
+  path: /logout
