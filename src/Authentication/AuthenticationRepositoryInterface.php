@@ -23,7 +23,7 @@ interface AuthenticationRepositoryInterface
      * @param string $username
      * @return UserEntity
      */
-    public function newUserEntity(string $method, string $credential, string $username = null): UserEntity;
+    public function newUserEntity(string $method, string $credential, ?string $username = null): UserEntity;
 
     public function getUserEntityRepository(): EntityRepository;
 

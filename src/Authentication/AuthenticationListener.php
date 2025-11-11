@@ -77,10 +77,15 @@ class AuthenticationListener implements AuthenticationEntryPointInterface, Event
         }
     }
 
-    public function start(Request $request, AuthenticationException $authException = null): Response
+    public function start(Request $request, ?AuthenticationException $authException = null): Response
     {
         $this->redirector->saveCurrentRequestUrl();
-        return new RedirectResponse($this->urlGenerator->generate($this->getLoginRoute()));
+        $redirect = new RedirectResponse($this->urlGenerator->generate($this->getLoginRoute()));
+        $repo = $this->repo();
+        if ($repo instanceof AuthenticationRepositoryInterfaceV2) {
+            $repo->beforeRedirectToLogin($request, $redirect);
+        }
+        return $redirect;
     }
 
     public function isEnabled(): bool

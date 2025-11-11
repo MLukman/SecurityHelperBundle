@@ -14,10 +14,7 @@ class Redirector
 
     private ?string $redirectUrl = null;
 
-    public function __construct(private RequestStack $requestStack, private UrlGeneratorInterface $urlGenerator, private CookieInjector $cookieInjector)
-    {
-        
-    }
+    public function __construct(private RequestStack $requestStack, private UrlGeneratorInterface $urlGenerator, private CookieInjector $cookieInjector) {}
 
     protected function storeRedirectUrl(?string $url, bool $overwrite)
     {
@@ -42,26 +39,24 @@ class Redirector
         if ($this->cookieInjector->hasCookie(self::COOKIEKEY)) {
             $url = $this->cookieInjector->getCookie(self::COOKIEKEY);
         }
-        if (!$url &&
-            ($referer = $this->request()->headers->get('referer')) &&
-            $referer != $this->loginFullUrl() &&
-            str_starts_with($referer, $this->request()->getSchemeAndHttpHost())
-        ) {
-            return $referer;
-        }
         if ($clear) {
-            $this->redirectUrl = null;
-            $this->cookieInjector->removeCookie(self::COOKIEKEY);
+            $this->clearRedirectUrl();
         }
         return $url;
     }
 
-    public function saveCurrentRequestUrl(bool $overwrite = true)
+    public function clearRedirectUrl()
+    {
+        $this->redirectUrl = null;
+        $this->cookieInjector->removeCookie(self::COOKIEKEY);
+    }
+
+    public function saveCurrentRequestUrl(bool $overwrite = false)
     {
         $this->storeRedirectUrl($this->request()->getSchemeAndHttpHost() . $this->request()->getRequestUri(), $overwrite);
     }
 
-    public function saveRefererUrl(bool $overwrite = true)
+    public function saveRefererUrl(bool $overwrite = false)
     {
         $this->storeRedirectUrl($this->request()->headers->get('referer'), $overwrite);
     }
